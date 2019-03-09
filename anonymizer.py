@@ -1,10 +1,14 @@
 #!/usr/bin/python3
 import sys
 import os
+import json
 import subprocess
 import argparse
 import re
 import random
+
+confPath = './'
+confFile = 'network.json'
 
 macRegExp = re.compile(r'([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})')
 
@@ -45,14 +49,12 @@ def main():
     global args
     args = parser.parse_args()
 
-    # Update repository
     if args.update:
         printv('Updating Anonymizer...')
         subprocess.run(['git', 'pull'], stdout=subprocess.PIPE)
         print('Anonymizer updated.')
-        sys.exit()
+        sys.exit(0)
 
-    # Print Version
     if args.version:
         print('Version 1.0 alpha')
         sys.exit(0)
@@ -62,7 +64,7 @@ def main():
         changeHostname()
 
     # Spoofing MAC address
-    if (args.iface and args.mac):
+    if args.iface:
         if checkIface():
             printv("Anonymizing the interface {0}".format(args.iface))
 
@@ -81,10 +83,10 @@ def main():
             elif args.permanent:
 
                 # Reverting to permanent MAC address and hostname
-                changeMacPerm()
+                revertPerm()
             elif args.mac != '':
 
-                # MAC change function
+                # MAC changer function
                 changeMac()
 
             # Interface Up
@@ -92,56 +94,112 @@ def main():
             printv('Interface {0} is up'.format(args.iface))
 
             print('Anonymizer thanks you')
+        else:
+            print('Invalid Interface')
 
 
-def macaddr(s, pat=macRegExp):
-    if not pat.match(s):
-        print('''MAC address should be in format
-                 XX:XX:XX:XX:XX:XX [0-9 a-f A-F]''')
-        raise argparse.ArgumentTypeError
-    return s
+def checkHostname():
 
-
-def printv(msg):
-    if args.verboose:
-        print(msg)
+    proc = subprocess.run('hostname', stdout=subprocess.PIPE)
+    if proc.returncode == 0:
+        hostname = proc.stdout.decode('utf-8')[:-1]
+        if os.path.isfile(confPath+confFile):
+            with open(confPath+confFile, 'r') as rf:
+                nData = json.loads(rf.read())
+            if not nData.__contains__('hostname'):
+                nData['hostname'] = hostname
+                with open(confPath+confFile, 'w') as wf:
+                    wf.write(json.dumps(nData, indent=4))
+            return True
+        else:
+            with open(confPath+conf, 'w') as wf:
+                temp = {
+                    'hostname': hostname,
+                    'interfaces': []
+                }
+                wf.write(json.dumps(temp, indent=4))
+                return True
+    else:
+        return False
 
 
 def checkIface():
-    # Checking weather the interface given is connected or not
-    proc = subprocess.run(['ip', 'link', 'show'], stdout=subprocess.PIPE)
-    output = proc.stdout.decode('utf-8')
-    output = output.split('\n')
-    ifaceList = []
-    for i in output:
-        temp = i.split(' ')
-        if(len(temp) > 1):
-            if(temp[1] != ''):
-                ifaceList.append(temp[1][0:-1])
+    proc = subprocess.run(['ip', '-j', 'address', 'show',
+                           args.iface], stdout=subprocess.PIPE)
+    if proc.returncode == 0:
+        iData = json.loads(proc.stdout.decode('utf-8'))
+        iData = [x for x in iData if len(x) > 1]
+        if os.path.isfile(confPath+confFile):
+            with open(confPath+confFile, 'r') as rf:
+                nData = json.loads(rf.read())
+            if not nData.__contains__('interfaces'):
+                nData['interfaces'] = []
+                nData['interfaces'].append(
+                    {
+                        'ifname': iData[0]['ifname'],
+                        'address': iData[0]['address']
+                    }
+                )
+                with open(confPath+confFile, 'w') as wf:
+                    wf.write(json.dumps(nData, indent=4))
+                return True
+            else:
+                ifList = []
+                for interface in nData['interfaces']:
+                    if interface['ifname'] not in ifList:
+                        ifList.append(interface['ifname'])
+
+                if iData[0]['ifname'] not in ifList:
+                    nData['interfaces'].append(
+                        {
+                            'ifname': iData[0]['ifname'],
+                            'address': iData[0]['address']
+                        }
+                    )
+                    with open(confPath+confFile, 'w') as wf:
+                        wf.write(json.dumps(nData, indent=4))
+                return True
+        else:
+            with open(confPath+confFile, 'w') as wf:
+                a = {'interfaces': []}
+                a['interfaces'].append(
+                    {
+                        'ifname': iData[0]['ifname'],
+                        'address': iData[0]['address']
+                    }
+                )
+                wf.write(json.dumps(a, indent=4))
 
 
 def changeHostname():
 
-    if args.randomhost is True:
-        # Hostname generator
-        proc = subprocess.run(['./genhost', '1'], stdout=subprocess.PIPE)
-        host = proc.stdout.decode('utf-8')[:-1]
-    elif args.hostname:
-        host = args.hostname
-    subprocess.run(['hostnamectl', 'set-hostname', host])
-    print('Hostname changed to {0}'.format(host))
-    print()
+    # Host name chceking whether it is in json data or not
+    if checkHostname():
+        if args.randomhost is True:
+            # Hostname generator
+            proc = subprocess.run(['./genhost', '1'], stdout=subprocess.PIPE)
+            host = proc.stdout.decode('utf-8')[:-1]
+        elif args.hostname:
+            host = args.hostname
+        subprocess.run(['hostnamectl', 'set-hostname', host])
+        print('Hostname changed to {0}'.format(host))
+        print()
 
 
 def changeMac():
 
     # MAC address spoofing through ip command
-    subprocess.run(['ip', 'link', 'set', args.iface, 'address', args.mac])
-    if args.quiet:
-        print('{1}'.format(args.mac))
+    proc = subprocess.run(
+        ['ip', 'link', 'set', args.iface, 'address', args.mac])
+    if proc.returncode == 0:
+        if args.quiet:
+            print('{1}'.format(args.mac))
+        else:
+            print('MAC address of interface {0} is spoofed to {1}'.format(
+                args.iface, args.mac))
     else:
-        print('MAC address of interface {0} is spoofed to {1}'.format(
-            args.iface, args.mac))
+        print('{0} is Invalid MAC address.'.format(args.mac))
+        sys.exit(1)
 
 
 def changeMacRand():
@@ -166,13 +224,37 @@ def changeMacRand():
         print()
 
 
-def changeMacPerm():
-    mac = 'e4:a7:a0:43:6a:48'
-    hostname = 'MegaByte'
-    subprocess.run(['ip', 'link', 'set', args.iface, 'address', mac])
-    subprocess.run(['hostnamectl', 'set-hostname', hostname])
-    print('MAC address reverted to {0}'.format(mac))
-    print('Hostname reverted to {0}'.format(hostname))
+def revertPerm():
+
+    if os.path.isfile(confPath+confFile):
+        with open(confPath+confFile, 'r') as rf:
+            nData = json.loads(rf.read())
+        if nData.__contains__('interfaces'):
+            if len(nData['interfaces']) > 0:
+                for i in nData['interfaces']:
+                    if i['ifname'] == args.iface:
+                        mac = i['address']
+        if nData.__contains__('hostname'):
+            subprocess.run(['hostnamectl', 'set-hostname', nData['hostname']])
+            print('Hostname reverted to {0}'.format('MegaByte'))
+        subprocess.run(['ip', 'link', 'set', args.iface, 'address', mac])
+        print('MAC address reverted to {0}'.format(mac))
+    else:
+        print('Network information not found.')
+        sys.exit(1)
+
+
+def macaddr(s, pat=macRegExp):
+    if not pat.match(s):
+        print('''MAC address should be in format
+                 XX:XX:XX:XX:XX:XX [0-9 a-f A-F]''')
+        raise argparse.ArgumentTypeError
+    return s
+
+
+def printv(msg):
+    if args.verboose:
+        print(msg)
 
 
 if __name__ == "__main__":

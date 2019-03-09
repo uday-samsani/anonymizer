@@ -21,7 +21,7 @@ airline
 airport
 alabama
 aladdin
-alamo
+#alamo
 alarm
 #alaska
 albert
@@ -231,7 +231,7 @@ capsule
 caravan
 carbon
 career
-cargo
+#cargo
 carlo
 carmen
 carol
@@ -353,7 +353,7 @@ crack
 craft
 crash
 crater
-credit
+#credit
 cricket
 crimson
 critic
@@ -437,7 +437,7 @@ dublin
 #dynamic
 dynasty
 eagle
-earth
+#earth
 #east
 easy
 echo
@@ -482,7 +482,7 @@ escort
 eternal
 ethnic
 europe
-evening
+#evening
 event
 everest
 evident
@@ -529,7 +529,7 @@ final
 finance
 finish
 finland
-fiona
+#fiona
 fire
 first
 fish
@@ -607,7 +607,7 @@ giraffe
 gizmo
 #glass
 global
-gloria
+#gloria
 #goblin
 gold
 golf
@@ -791,7 +791,7 @@ lecture
 left
 legacy
 legal
-legend
+#legend
 lemon
 #leonid
 lesson
@@ -817,7 +817,7 @@ little
 #llama
 lobby
 lobster
-local
+#local
 locate
 logic
 logo
@@ -1022,7 +1022,7 @@ optic
 optimal
 option
 opus
-orange
+#orange
 orbit
 orca
 orchid
@@ -1251,9 +1251,9 @@ right
 ringo
 rio
 #risk
-ritual
+#ritual
 rival
-river
+#river
 riviera
 road
 robert
@@ -1396,12 +1396,12 @@ spain
 spark
 sparta
 special
-speech
+#speech
 speed
 spell
 #spend
 sphere
-spider
+#spider
 spiral
 spirit
 split
@@ -1444,7 +1444,7 @@ sugar
 sulfur
 #sultan
 summer
-sunday
+#sunday
 sunset
 #super
 support
@@ -1458,7 +1458,7 @@ swim
 #swing
 switch
 symbol
-system
+#system
 table
 taboo
 tactic
@@ -1532,7 +1532,7 @@ tuna
 tunnel
 #turbo
 turtle
-twin
+#twin
 twist
 type
 ultra
