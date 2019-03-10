@@ -1,0 +1,13 @@
+{
+    "hostname": "UdaySamsani",
+    "interfaces": [
+        {
+            "ifname": "wlp2s0",
+            "address": "e4:a7:a0:43:6a:48"
+        },
+        {
+            "ifname": "enp3s0f1",
+            "address": "38:d5:47:8b:a6:8d"
+        }
+    ]
+}

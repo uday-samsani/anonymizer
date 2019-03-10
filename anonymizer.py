@@ -112,7 +112,7 @@ def checkHostname():
                     wf.write(json.dumps(nData, indent=4))
             return True
         else:
-            with open(confPath+conf, 'w') as wf:
+            with open(confPath+confFile, 'w') as wf:
                 temp = {
                     'hostname': hostname,
                     'interfaces': []
